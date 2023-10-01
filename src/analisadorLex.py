@@ -1,24 +1,41 @@
 import re
 import sys
 from typing import TextIO
+import chardet
 
+#Variaveis globais
+
+##Controla a posição da linha e coluna atual no arquivo
 col = 0         #Coluna atual
 line = 1        #Linha atual
+
+##Controla a posição da ultima coluna da linha anterior no arquivo
+tam_linha = 0   #Tamanho da linha atual
+tam_linha_ant = 0   #Tamanho da linha anterior
+
 
 """
 Função que simula o analisador lexico
 Chama o proximo token do arquivo
 
-Recebe como parametro o caminho do arquivo
+Recebe como parametro o caminho de um arquivo, que deve ser um arquivo .cic
+Retorna uma lista de tokens
 """
-def analisadorLex(file_path):
+def analisadorLex(file_path: str) -> list:
     tokens = []
     errors = []
     global col, line
+    encoding_type = ""
 
     if file_path.endswith(".cic"):
         try:
-            with open(file_path, "r", encoding="UTF-8") as file:
+            #Detecta o encoding do arquivo
+            with open(file_path, "rb") as file:
+                result = chardet.detect(file.read())
+                encoding_type = result['encoding']
+
+            #Chama o proximo token do arquivo até o fim do arquivo
+            with open(file_path, "r", encoding = encoding_type) as file:
                 while True:
                     token = next_token(file)
 
@@ -29,9 +46,11 @@ def analisadorLex(file_path):
                     else:
                         tokens.append(token)
                 
+                #Imprime os erros encontrados, se houver
                 if errors != []:
                     print_errors(file_path, errors)
 
+                #Retorna a lista de tokens
                 return tokens
 
         except FileNotFoundError:
@@ -65,10 +84,10 @@ def next_token(file: TextIO) -> dict:
         char = next_char(file)
 
         if not char:
-            return
+            return None
         
         #Identificando o inicio do token
-        elif char not in [' ', '\n'] and state == 0:
+        if char not in [' ', '\n'] and state == 0:
             line_token = line
             col_token = col
 
@@ -139,9 +158,9 @@ def next_token(file: TextIO) -> dict:
                     previous_char(file)
                     state = 3
             case 3:
-                previous_char(file)
                 reserved_word = is_reserved_word(lexema)
                 if reserved_word != -1:
+                    previous_char(file)
                     return {"token":reserved_word, "lexema":"", "linha":line_token, "coluna":col_token}
                 else:
                     error_code = 7
@@ -199,6 +218,7 @@ def next_token(file: TextIO) -> dict:
                     lexema += char
                     state = 11
                 else:
+                    previous_char(file)
                     state = 39
             case 11:
                 if ver_lower_case(char) or ver_number(char):
@@ -228,6 +248,7 @@ def next_token(file: TextIO) -> dict:
                     lexema += char
                     state = 17
                 elif char == '\n':
+                    previous_char(file)
                     error_code = 2
                     state = 18
                 else:
@@ -239,11 +260,13 @@ def next_token(file: TextIO) -> dict:
             
 
             case 18:                             #Estado de rejeição
+                previous_char(file)
                 return handle_errors(error_code, file, char)
             
 
             case 19:
                 if char == '\n':
+                    previous_char(file)
                     state = 20
                 else:
                     state = 19
@@ -330,6 +353,7 @@ def next_token(file: TextIO) -> dict:
                 if char == '=':
                     state = 41
                 else:
+                    previous_char(file)
                     state = 42
             case 41:
                 previous_char(file)
@@ -351,7 +375,7 @@ def next_token(file: TextIO) -> dict:
                     lexema += char
                     state = 49
                 else:
-                    lexema += char
+                    previous_char(file)
                     state = 45
             case 44:
                 if ver_number(char) or ver_AF(char):
@@ -364,8 +388,8 @@ def next_token(file: TextIO) -> dict:
                     lexema += char
                     state = 49
                 else:
-                    lexema += char
                     state = 45
+                    previous_char(file)
             case 45:
                 previous_char(file)
                 return {"token":"TK_NUMERO", "lexema":lexema, "linha":line_token, "coluna":col_token}
@@ -385,6 +409,7 @@ def next_token(file: TextIO) -> dict:
                     lexema += char
                     state = 49
                 else:
+                    previous_char(file)
                     state = 48
             case 48:
                 previous_char(file)
@@ -413,11 +438,13 @@ def next_token(file: TextIO) -> dict:
                     lexema += char
                     state = 51
                 else:
+                    previous_char(file)
                     state = 52                
             case 52:
                 previous_char(file)
                 return {"token":"TK_NUMERO", "lexema":lexema, "linha":line_token, "coluna":col_token}
-                
+
+
 
 """
 Função que retorna o proximo caracter do arquivo
@@ -426,15 +453,18 @@ Recebe como parametro o arquivo
 Retorna um str, sendo o proximo caracter
 """
 def next_char(file: TextIO) -> str:
-    global col, line, pos_arqv
+    global col, line, tam_linha, tam_linha_ant
 
     char = file.read(1)
 
     col += 1
+    tam_linha += 1
 
     if char == '\n':
         line += 1
         col = 0
+        tam_linha_ant = tam_linha
+        tam_linha = 0
 
     return char
 
@@ -445,16 +475,18 @@ Função que volta para o caracter anterior do arquivo
 Recebe como parametro o arquivo
 """
 def previous_char(file: TextIO) -> None:
-    global col, line, pos_arqv
+    global col, line, tam_linha, tam_linha_ant
 
     file.seek(file.tell() - 1, 0)
     
     col -= 1
+    tam_linha -= 1
     
-    if col < 0:     #####Resolver esse caso
+    if col < 0:     
         line -= 1
-        col = 0
-   
+        col = tam_linha_ant
+        tam_linha = tam_linha_ant
+
 
 """
 Função que verifica se o lexema do token é uma palavra reservada
@@ -515,6 +547,10 @@ def handle_errors(error_code: int, file: TextIO, char: str) -> dict:
         7: "Palavra reservada não reconhecida"
     }
 
+    if error_code == 7:
+        print(f"Erro: {errors_list[error_code]} na linha {line_error}, coluna {col_error}")
+        print(f"Lexema: {char}")
+
     #Lista de tokens de sincronização
     tokens_sync = {
         ",",
@@ -534,7 +570,7 @@ def handle_errors(error_code: int, file: TextIO, char: str) -> dict:
 Função que imprime os erros encontrados no arquivo
 """
 def print_errors(file_path: str, errors: list) -> None:  #####Fazer
-    with open(file_path, 'r', encoding="UTF-8") as file:
+    with open(file_path, 'r') as file:
         lines = file.readlines()
 
     #Adiciona a numeração de linhas
@@ -552,7 +588,7 @@ def print_errors(file_path: str, errors: list) -> None:  #####Fazer
     
     #Escreve no arquivo
     error_path = 'erro_' + file_path.split('/')[-1].split('.')[0] + '.txt'
-    with open(error_path, 'w', encoding="UTF-8") as file:
+    with open(error_path, 'w') as file:
         for line in numbered_lines:
             file.write(line)
     
@@ -566,7 +602,10 @@ Recebe como parametro a lista de tokens e o caminho do arquivo
 """
 def gerar_relatorio(tokens: list, file_path: str) -> None:
 
-    relatorio_path = file_path = 'relatorio_' + file_path.split('/')[-1].split('.')[0] + '.txt'
+    #Cria o caminho do arquivo de relatorio com o padrao: relatorio_<nome_do_arquivo>.txt
+    relatorio_path = 'relatorio_' + file_path.split('/')[-1].split('.')[0] + '.txt'
+    
+    #Conta a frequencia de cada token
     cont_tokens = {}
     for token_info in tokens:
         token = token_info['token']
@@ -575,37 +614,42 @@ def gerar_relatorio(tokens: list, file_path: str) -> None:
         else:
             cont_tokens[token] = 1
     
+    #Ordena os tokens por frequencia
     tokens_order = sorted(cont_tokens.items(), key=lambda x: x[1], reverse=True)
 
-    with open(relatorio_path, 'w', encoding="UTF-8") as relatorio:
+    #Escreve no arquivo de relatorio
+    with open(relatorio_path, 'w') as relatorio:
+        #Cabeçalho do relatorio de tokens reconhecidos
         relatorio.write(f"TOKENS RECONHECIDOS:\n\n")
         relatorio.write(f"+------+------+---------------------------+---------------------------+\n")
         relatorio.write(f"| LIN  | COL  | {'TOKEN':<25} | {'LEXEMA':<25} |\n")
         relatorio.write(f"+------+------+---------------------------+---------------------------+\n")
         
+        #Escreve os tokens reconhecidos no arquivo formatados
         for token_info in tokens:
             linha = token_info['linha']
             coluna = token_info['coluna']
             token = token_info['token']
             lexema = token_info['lexema']
             
-            linha_str = str(linha).rjust(4)
-            coluna_str = str(coluna).rjust(4)
-            token_str = token.ljust(25)
-            lexema_str = lexema.ljust(25)
+            linha_str = str(linha).rjust(4)     #4 espaços para a numeração de linha
+            coluna_str = str(coluna).rjust(4)   #4 espaços para a numeração de coluna
+            token_str = token.ljust(25)         #25 espaços para o token
+            lexema_str = lexema.ljust(25)       #25 espaços para o lexema
             
             relatorio.write(f"| {linha_str} | {coluna_str} | {token_str} | {lexema_str} |\n")
             relatorio.write(f"+------+------+---------------------------+---------------------------+\n")
 
-
+        #Cabeçalho do somatorio de tokens reconhecidos
         relatorio.write(f"\n\nSOMATÓRIO DE TOKENS RECONHECIMENTOS:\n\n")
         relatorio.write(f"+---------------------------+-------+\n")
         relatorio.write(f"| {'TOKEN':<25} | {'USOS':<5} |\n")
         relatorio.write(f"+---------------------------+-------+\n")
         
+        #Escreve o somatorio de tokens reconhecidos no arquivo formatados
         for token, frequencia in tokens_order:
             token_str = token.ljust(25)
-            frequencia_str = str(frequencia).rjust(5)
+            frequencia_str = str(frequencia).rjust(5)   #5 espaços para a frequencia
             
             relatorio.write(f"| {token_str} | {frequencia_str} |\n")
             relatorio.write(f"+---------------------------+-------+\n")
@@ -618,8 +662,6 @@ def main(argv, argc):
     else:
         file_path = input("Digite o caminho do arquivo: ")
     
-
-
     tokens = analisadorLex(file_path)
 
     gerar_relatorio(tokens, file_path)

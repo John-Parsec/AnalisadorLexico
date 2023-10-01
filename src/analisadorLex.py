@@ -547,10 +547,6 @@ def handle_errors(error_code: int, file: TextIO, char: str) -> dict:
         7: "Palavra reservada não reconhecida"
     }
 
-    if error_code == 7:
-        print(f"Erro: {errors_list[error_code]} na linha {line_error}, coluna {col_error}")
-        print(f"Lexema: {char}")
-
     #Lista de tokens de sincronização
     tokens_sync = {
         ",",

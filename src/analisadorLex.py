@@ -159,8 +159,8 @@ def next_token(file: TextIO) -> dict:
                     state = 3
             case 3:
                 reserved_word = is_reserved_word(lexema)
+                previous_char(file)
                 if reserved_word != -1:
-                    previous_char(file)
                     return {"token":reserved_word, "lexema":"", "linha":line_token, "coluna":col_token}
                 else:
                     error_code = 7
@@ -445,7 +445,6 @@ def next_token(file: TextIO) -> dict:
                 return {"token":"TK_NUMERO", "lexema":lexema, "linha":line_token, "coluna":col_token}
 
 
-
 """
 Função que retorna o proximo caracter do arquivo
 
@@ -547,12 +546,16 @@ def handle_errors(error_code: int, file: TextIO, char: str) -> dict:
         7: "Palavra reservada não reconhecida"
     }
 
+    #Ajusta a posição do erro para palavras reservadas
+    if error_code == 7:
+        col_error += 1
+    
     #Lista de tokens de sincronização
     tokens_sync = {
         ",",
         "(",
         ")"
-    }
+    }    
 
     #Aplicando o metodo de desespero, descartando tudo até o proximo token de sincronização
     while char not in tokens_sync:

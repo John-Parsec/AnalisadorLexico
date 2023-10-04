@@ -14,14 +14,15 @@ tam_linha = 0   #Tamanho da linha atual
 tam_linha_ant = 0   #Tamanho da linha anterior
 
 
-"""
-Função que simula o analisador lexico
-Chama o proximo token do arquivo
-
-Recebe como parametro o caminho de um arquivo, que deve ser um arquivo .cic
-Retorna uma lista de tokens
-"""
 def analisadorLex(file_path: str) -> list:
+    """
+    Função que simula o analisador
+    Chama o proximo token do arquivo
+
+    Recebe como parametro o caminho de um arquivo, que deve ser um arquivo .cic
+    Retorna uma lista de tokens
+    """
+
     tokens = []
     errors = []
     global col, line
@@ -59,19 +60,20 @@ def analisadorLex(file_path: str) -> list:
         print("Por favor, forneça um arquivo com extensão .cic.")
 
 
-"""
-Função que retorna o próximo token do arquivo
-Feita baseada no automato finito deterministico
-Passa o arquivo caracter por caracter, enquanto analisa pelo estado atual seguindo o automato
-e no fim retorna o token
-
-Estado 0: Estado inicial - Primeiro estado do automato
-Estado 18: Estado de rejeição - Estado que indica que o token não foi reconhecido e chama a função handle_errors que lida com os erros
-
-Recebe como parametro o arquivo
-Retorna um dicionario com o token, lexema, linha e coluna
-"""
 def next_token(file: TextIO) -> dict:
+    """
+    Função que retorna o próximo token do arquivo
+    Feita baseada no automato finito deterministico
+    Passa o arquivo caracter por caracter, enquanto analisa pelo estado atual seguindo o automato
+    e no fim retorna o token
+
+    Estado 0: Estado inicial - Primeiro estado do automato
+    Estado 18: Estado de rejeição - Estado que indica que o token não foi reconhecido e chama a função handle_errors que lida com os erros
+
+    Recebe como parametro o arquivo
+    Retorna um dicionario com o token, lexema, linha e coluna
+    """
+
     state = 0
     lexema = ""
     error_code = -1
@@ -445,13 +447,14 @@ def next_token(file: TextIO) -> dict:
                 return {"token":"TK_NUMERO", "lexema":lexema, "linha":line_token, "coluna":col_token}
 
 
-"""
-Função que retorna o proximo caracter do arquivo
-
-Recebe como parametro o arquivo
-Retorna um str, sendo o proximo caracter
-"""
 def next_char(file: TextIO) -> str:
+    """
+    Função que retorna o proximo caracter do arquivo
+
+    Recebe como parametro o arquivo
+    Retorna um str, sendo o proximo caracter
+    """
+
     global col, line, tam_linha, tam_linha_ant
 
     char = file.read(1)
@@ -468,12 +471,13 @@ def next_char(file: TextIO) -> str:
     return char
 
 
-"""
-Função que volta para o caracter anterior do arquivo
-
-Recebe como parametro o arquivo
-"""
 def previous_char(file: TextIO) -> None:
+    """
+    Função que volta para o caracter anterior do arquivo
+
+    Recebe como parametro o arquivo
+    """
+
     global col, line, tam_linha, tam_linha_ant
 
     file.seek(file.tell() - 1, 0)
@@ -487,13 +491,14 @@ def previous_char(file: TextIO) -> None:
         tam_linha = tam_linha_ant
 
 
-"""
-Função que verifica se o lexema do token é uma palavra reservada
-
-Recebe como parametro o lexema do token
-Retorna o token da palavra reservada ou -1 caso não seja
-"""
 def is_reserved_word(token: str) -> str:
+    """
+    Função que verifica se o lexema do token é uma palavra reservada
+
+    Recebe como parametro o lexema do token
+    Retorna o token da palavra reservada ou -1 caso não seja
+    """
+
     reserved_words = {
         "programa": "TK_PROGRAMA",
         "fim_programa": "TK_FIM_PROGRAMA",
@@ -512,25 +517,30 @@ def is_reserved_word(token: str) -> str:
     
 
 def ver_lower_case(char: str) -> bool:
+    """Função que verifica se o caracter é uma letra minuscula utilizando expressão regular"""
     return bool(re.match(r'[a-z]', char))
 
 def ver_number(char: str) -> bool:
+    """Função que verifica se o caracter é um numero utilizando expressão regular"""
     return bool(re.match(r'[0-9]', char))
 
 def ver_AF(char: str) -> bool:
+    """Função que verifica se o caracter é uma letra entre A e F utilizando expressão regular"""
     return bool(re.match(r'[A-F]', char))
 
 def ver_GZ(char: str) -> bool:
+    """Função que verifica se o caracter é uma letra entre G e Z utilizando expressão regular"""
     return bool(re.match(r'[G-Z]', char))
 
 
-"""
-Função que lida com os erros encontrados no arquivo
-
-Recebe como parametro o codigo do erro, o arquivo e o caracter
-Retorna um dicionario com o token, lexema, linha e coluna (apenas para verificação de erro)
-"""
 def handle_errors(error_code: int, file: TextIO, char: str) -> dict:
+    """
+    Função que lida com os erros encontrados no arquivo
+
+    Recebe como parametro o codigo do erro, o arquivo e o caracter
+    Retorna um dicionario com o token, lexema, linha e coluna (apenas para verificação de erro)
+    """
+
     global col, line, pos_arqv, errors
     col_error = col
     line_error = line
@@ -567,10 +577,11 @@ def handle_errors(error_code: int, file: TextIO, char: str) -> dict:
     return {"token":"ERROR", "lexema":errors_list[error_code], "linha":line_error, "coluna":col_error}
     
 
-"""
-Função que imprime os erros encontrados no arquivo
-"""
 def print_errors(file_path: str, errors: list) -> None:  #####Fazer
+    """
+    Função que imprime os erros encontrados no arquivo
+    """
+
     with open(file_path, 'r') as file:
         lines = file.readlines()
 
@@ -594,14 +605,14 @@ def print_errors(file_path: str, errors: list) -> None:  #####Fazer
             file.write(line)
     
 
-"""
-Função que gera os relatorios do analisador lexico
-Imprime em um arquivo uma lista de tokens reconhecidos com suas respectivas localizações
-e um somatorio de tokens reconhecidos ordenados por frequencia
-
-Recebe como parametro a lista de tokens e o caminho do arquivo
-"""
 def gerar_relatorio(tokens: list, file_path: str) -> None:
+    """
+    Função que gera os relatorios do analisador lexico
+    Imprime em um arquivo uma lista de tokens reconhecidos com suas respectivas localizações
+    e um somatorio de tokens reconhecidos ordenados por frequencia
+
+    Recebe como parametro a lista de tokens e o caminho do arquivo
+    """
 
     #Cria o caminho do arquivo de relatorio com o padrao: relatorio_<nome_do_arquivo>.txt
     relatorio_path = 'relatorio_' + file_path.split('/')[-1].split('.')[0] + '.txt'

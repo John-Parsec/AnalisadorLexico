@@ -85,9 +85,6 @@ def next_token(file: TextIO) -> dict:
     while True:
         char = next_char(file)
 
-        if not char:
-            return None
-        
         #Identificando o inicio do token
         if char not in [' ', '\n'] and state == 0:
             line_token = line
@@ -292,6 +289,14 @@ def next_token(file: TextIO) -> dict:
             case 23:
                 if char == "'":
                     state = 24
+                elif not char:
+                    previous_char(file)
+                    error_code = 1
+                    state = 18
+
+                    #evitar que o loop termine antes de retornar o token
+                    previous_char(file)
+                    char = next_char(file)
                 else:
                     state = 23
             case 24:
@@ -445,6 +450,9 @@ def next_token(file: TextIO) -> dict:
             case 52:
                 previous_char(file)
                 return {"token":"TK_NUMERO", "lexema":lexema, "linha":line_token, "coluna":col_token}
+        
+        if not char:
+            return None
 
 
 def next_char(file: TextIO) -> str:
@@ -541,7 +549,7 @@ def handle_errors(error_code: int, file: TextIO, char: str) -> dict:
     Retorna um dicionario com o token, lexema, linha e coluna (apenas para verificação de erro)
     """
 
-    global col, line, pos_arqv, errors
+    global col, line
     col_error = col
     line_error = line
 

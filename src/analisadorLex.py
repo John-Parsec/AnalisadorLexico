@@ -550,18 +550,20 @@ def handle_errors(error_code: int, file: TextIO, char: str) -> dict:
     if error_code == 7:
         col_error += 1
     
-    #Lista de tokens de sincronização
-    tokens_sync = {
-        ",",
-        "(",
-        ")"
-    }    
+    # #Opicional: Metodo de desespero
+    # #Lista de tokens de sincronização
+    # tokens_sync = {
+    #     ",",
+    #     "(",
+    #     ")"
+    # }    
 
-    #Aplicando o metodo de desespero, descartando tudo até o proximo token de sincronização
-    while char not in tokens_sync:
-        char = next_char(file)
+    # #Aplicando o metodo de desespero, descartando tudo até o proximo token de sincronização
+    # while char not in tokens_sync:
+    #     char = next_char(file)
 
-    previous_char(file)
+    # previous_char(file)
+
     return {"token":"ERROR", "lexema":errors_list[error_code], "linha":line_error, "coluna":col_error}
     
 

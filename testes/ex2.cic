@@ -1,0 +1,9 @@
+# Ex-02-incorreto.cic
+
+programa
+    imprima("Digite um
+    nro")
+    leia(<1num>)
+    <soma> := <a> + R$23.3
+    imprima(<raiz>)
+fim_programa

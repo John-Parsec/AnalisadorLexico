@@ -1,0 +1,10 @@
+''' Ex-03-incorreto.cic'''
+
+Programa
+    leia(<a>)
+    <soma> := <a> + R$23.34
+    se <a> <= <b> então
+        imprima(34F.34e23A)
+    imprima("Fim prog"rama")
+ fim_programa
+ 

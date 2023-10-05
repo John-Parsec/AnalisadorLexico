@@ -658,14 +658,20 @@ def gerar_relatorio(tokens: list, file_path: str) -> None:
         relatorio.write(f"| {'TOKEN':<25} | {'USOS':<5} |\n")
         relatorio.write(f"+---------------------------+-------+\n")
         
+        total = 0
         #Escreve o somatorio de tokens reconhecidos no arquivo formatados
         for token, frequencia in tokens_order:
             token_str = token.ljust(25)
             frequencia_str = str(frequencia).rjust(5)   #5 espaços para a frequencia
-            
+            total += frequencia
+
             relatorio.write(f"| {token_str} | {frequencia_str} |\n")
             relatorio.write(f"+---------------------------+-------+\n")
             
+        total_token = "TOTAL".ljust(25)
+        total_str = str(total).rjust(5)
+        relatorio.write(f"| {total_token} | {total_str} |\n")
+        relatorio.write(f"+---------------------------+-------+\n")
 
 
 def main(argv, argc):
